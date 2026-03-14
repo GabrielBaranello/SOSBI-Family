@@ -6,10 +6,66 @@
     <title>S.O.S.B.I Wizard</title>
 </head>
 <body>
-    <h1>Welcome to S.O.S.B.I Wizard</h1>
+    <h1>Choose a system</h1>
     <h2>Backup first. Install safe and simple.</h2>
+    <select id="osSelect"></select>
     <button onclick="window.location.href = 'usb.html';">Back</button>
-    <button onclick="window.location.href = 'particiones.html';">Next</button>
+    <button id="nextBtn">Next</button>
     
+    <script>
+        const osSelect = document.getElementById('osSelect');
+        const nextBtn = document.getElementById('nextBtn');
+
+        function setOptions(systems) {
+            osSelect.innerHTML = '';
+            if (!systems || typeof systems !== 'object') {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = 'No systems available';
+                osSelect.appendChild(opt);
+                osSelect.disabled = true;
+                nextBtn.disabled = true;
+                return;
+            }
+            Object.keys(systems).forEach(k => {
+                const opt = document.createElement('option');
+                opt.value = k;
+                opt.textContent = systems[k].nombre || k;
+                osSelect.appendChild(opt);
+            });
+            osSelect.disabled = false;
+            nextBtn.disabled = false;
+        }
+
+        async function loadState() {
+            try {
+                const resp = await fetch('state.json', { cache: 'no-store' });
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const data = await resp.json();
+                setOptions(data.systems);
+            } catch (err) {
+                setOptions(null);
+                console.warn('loadState error:', err);
+            }
+        }
+
+        async function postSelection() {
+            const selected = osSelect.value;
+            if (!selected) return;
+            try {
+                await fetch('/api/state', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ selected_system: selected })
+                });
+            } catch (err) {
+                console.warn('postSelection error:', err);
+            }
+            window.location.href = 'particiones.html';
+        }
+
+        nextBtn.addEventListener('click', postSelection);
+        loadState();
+    </script>
 </body>
 </html>

@@ -7,11 +7,64 @@
 </head>
 <body>
     <h1>Pick an USB device to place the operative sistem</h1>
-    <select>
-        <option>d</option>
-        <option>d</option>
-    </select> 
+    <select id="usbSelect"></select>
     <button onclick="window.location.href = 'index.html';">Back</button>
-    <button onclick="window.location.href = 'os.html';">Next</button>
+    <button id="nextBtn">Next</button>
+
+    <script>
+        const usbSelect = document.getElementById('usbSelect');
+        const nextBtn = document.getElementById('nextBtn');
+
+        function setOptions(usbs) {
+            usbSelect.innerHTML = '';
+            if (!Array.isArray(usbs) || usbs.length === 0) {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = 'No USB detected';
+                usbSelect.appendChild(opt);
+                usbSelect.disabled = true;
+                nextBtn.disabled = true;
+                return;
+            }
+            usbs.forEach(u => {
+                const opt = document.createElement('option');
+                opt.value = u;
+                opt.textContent = u;
+                usbSelect.appendChild(opt);
+            });
+            usbSelect.disabled = false;
+            nextBtn.disabled = false;
+        }
+
+        async function loadState() {
+            try {
+                const resp = await fetch('state.json', { cache: 'no-store' });
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const data = await resp.json();
+                setOptions(data.usb_devices);
+            } catch (err) {
+                setOptions([]);
+                console.warn('loadState error:', err);
+            }
+        }
+
+        async function postSelection() {
+            const selected = usbSelect.value;
+            if (!selected) return;
+            try {
+                await fetch('/api/state', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ selected_usb: selected })
+                });
+            } catch (err) {
+                console.warn('postSelection error:', err);
+            }
+            window.location.href = 'os.html';
+        }
+
+        nextBtn.addEventListener('click', postSelection);
+        loadState();
+    </script>
 </body>
 </html>

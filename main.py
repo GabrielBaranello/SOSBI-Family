@@ -21,12 +21,12 @@ SISTEMAS = {
 
 def seleccionar_os():
     global copy
-    print("\n--- SELECCIÓN DE SISTEMA OPERATIVO ---")
+    "print(\"\\n--- SELECCIÓN DE SISTEMA OPERATIVO ---\")"
     for k, v in SISTEMAS.items():
-        print(f"{k}. {v['nombre']}")
-    print("7. Descargar otro (Ingresar URL manual)")
-    print("8. Ruta en local (Ej: D:\\descargas\\windows10.iso)")
-    print("0. Salir")
+        "print(f\"{k}. {v['nombre']}\")"
+    "print(\"7. Descargar otro (Ingresar URL manual)\")"
+    "print(\"8. Ruta en local (Ej: D:\\\\descargas\\\\windows10.iso)\")"
+    "print(\"0. Salir\")"
     
     opcion = input("\nElige una opción: ")
     if opcion == "7":
@@ -36,11 +36,11 @@ def seleccionar_os():
         if os.path.exists(ruta_local):
             return ruta_local
         else:
-            print("Archivo no encontrado. Volviendo al menú.")
+            "print(\"Archivo no encontrado. Volviendo al menú.\")"
             return seleccionar_os()
             copy = True
     elif opcion == "0":
-        print("Saliendo...")
+        "print(\"Saliendo...\")"
         exit()
     return SISTEMAS.get(opcion, {}).get("url")
 
@@ -48,11 +48,11 @@ def backup_y_subida(origen, nombre_backup, letra_usb):
     temp_usb = f"{letra_usb}\\.temp_backup"
     if not os.path.exists(temp_usb): os.makedirs(temp_usb)
     
-    print(f"\nRespaldando {origen}...")
+    "print(f\"\\nRespaldando {origen}...\")"
     # -p indica contraseña opcional, -v2g fragmentos, -ssw archivos abiertos
     subprocess.run(f'{_7Z_RUTA} a "{temp_usb}\\{nombre_backup}.7z" "{origen}" -v2g -mx1 -ssw -xr!AppData', shell=True, timeout=3600)
     
-    print("Subiendo a la nube mediante Rclone...")
+    "print(\"Subiendo a la nube mediante Rclone...\")"
     subprocess.run(f'{_RCLONE_RUTA} move "{temp_usb}" "remote:backups/{nombre_backup}" --progress', shell=True)
 
 def main():
@@ -65,19 +65,16 @@ def main():
     if not usbs:
         write_log("No se detectó ningún USB.", "error")
         return
-    print("Unidades extraibles detectadas:")
+    write_log("Unidades extraibles detectadas:", "info")
     if len(usbs) == 1:
         target_usb = usbs[0]
-        print(f"Seleccionando automáticamente: {target_usb}")
+        write_log(f"Seleccionando automáticamente: {target_usb}", "info")
+        write_state({'selected_usb': target_usb})
     else:
         for i in range(len(usbs)):
-            print(f"{i}. unidad USB {usbs[i]}")
-        target_usb = usbs[int(input("Elija un USB para generar el medio de instalacion: "))] 
-    print(f"Trabajando en: {target_usb}")
-
-    # 2. Elegir OS antes de borrar nada
-    url_descarga = seleccionar_os()
-    if not url_descarga: return print("URL no válida.")
+            "print(f\"{i}. unidad USB {usbs[i]}\")"
+        "target_usb = usbs[int(input(\"Elija un USB para generar el medio de instalacion: \"))]"
+    write_log(f"Trabajando en: {target_usb}", "info")
 
     # 3. Respaldos (USB + Usuarios + Particiones)
     # Interacción con el usuario ahora via UI: se espera que la webview POSTee selections
@@ -116,6 +113,17 @@ def main():
     else:
         write_log('No se recibió selección de sistema desde la interfaz.', 'warning')
         return
+
+    # Resolver URL según selección
+    url_descarga = None
+    if selected_sys in SISTEMAS:
+        url_descarga = SISTEMAS[selected_sys].get('url')
+    elif selected_sys and isinstance(selected_sys, str) and selected_sys.startswith(("http://", "https://")):
+        url_descarga = selected_sys
+    if not url_descarga:
+        write_log("URL no válida.", "error")
+        return
+
     # "print(f\"Descargando archivos de sistema desde: {url_descarga}\")"
     # Usamos curl (nativo en Win10/11) para descargar al USB
     archivo_dest = f"{target_usb}\\os_setup.iso"
