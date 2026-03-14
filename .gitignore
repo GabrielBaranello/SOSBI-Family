@@ -3,7 +3,7 @@ rclone.config
 inventario_software.txt
 /7-zip portable
 /7-Zip
-!.git
+*.nt
 ## python .gitignore template
 # Byte-compiled / optimized / DLL files
 __pycache__/

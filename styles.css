@@ -1,0 +1,44 @@
+.scrollable-box {
+  height: 150px; /* Tamaño específico */
+    width: 300px;
+    overflow-y: auto; /* Scroll vertical */
+    border: 1px solid #ccc;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Log message styles */
+.log-entry {
+  padding: 6px 8px;
+  margin-bottom: 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 13px;
+}
+.log-info {
+  background: #eef6ff;
+  color: #0b4f8a;
+  border: 1px solid #c7e0ff;
+}
+.log-warning {
+  background: #fff8e6;
+  color: #6a4b00;
+  border: 1px solid #ffe7a8;
+}
+.log-error {
+  background: #ffecec;
+  color: #7a0b0b;
+  border: 1px solid #ffbcbc;
+}
+.log-debug {
+  background: #f4f4f4;
+  color: #333;
+  border: 1px solid #ddd;
+}
+.log-ts {
+  display: block;
+  font-size: 11px;
+  opacity: 0.7;
+  margin-top: 4px;
+}

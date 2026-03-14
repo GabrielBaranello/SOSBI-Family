@@ -1,0 +1,22 @@
+{
+    "messages": [
+        {
+            "id": 1,
+            "type": "info",
+            "message": "Iniciando proceso de instalación...",
+            "ts": "2026-03-14T12:00:00Z"
+        },
+        {
+            "id": 2,
+            "type": "warning",
+            "message": "Espacio en disco bajo en la unidad seleccionada.",
+            "ts": "2026-03-14T12:00:05Z"
+        },
+        {
+            "id": 3,
+            "type": "error",
+            "message": "No se detectó ningún USB. Conecte un USB e intente de nuevo.",
+            "ts": "2026-03-14T12:00:10Z"
+        }
+    ]
+}

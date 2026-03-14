@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.O.S.B.I Wizard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Installing.</h1>
+    <p class="scrollable-box" id="LogBox">
+        
+    </p>
+    <button id="cancelButton">Cancel</button>
+
+    <template id="canceled">
+        <h1>Installation canceled.</h1>
+        <p>You can now close this window.</p>
+    </template>
+
+    <script>
+        // Control cancel
+        let canceled = false;
+        document.getElementById("cancelButton").addEventListener("click", function() {
+            const canceledTemplate = document.getElementById("canceled");
+            canceled = true;
+            document.body.innerHTML = canceledTemplate.innerHTML;
+        });
+
+        // Installing animation (dots)
+        let dots = 0;
+        const installAnimation = setInterval(() => {
+            dots = dots === 3 ? 1 : dots + 1;
+            if (!canceled) {
+                document.querySelector("h1").textContent = "Installing" + ".".repeat(dots);
+            }
+        }, 1000);
+
+        // Log rendering
+        const logBox = document.getElementById('LogBox');
+
+        function renderMessages(messages) {
+            logBox.innerHTML = '';
+            messages.forEach(m => {
+                const div = document.createElement('div');
+                div.classList.add('log-entry');
+                const typeClass = 'log-' + (m.type || 'info');
+                div.classList.add(typeClass);
+                div.textContent = m.message;
+                if (m.ts) {
+                    const ts = document.createElement('span');
+                    ts.classList.add('log-ts');
+                    ts.textContent = new Date(m.ts).toLocaleString();
+                    div.appendChild(ts);
+                }
+                logBox.appendChild(div);
+            });
+            // auto scroll to bottom
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        async function loadLog() {
+            try {
+                const resp = await fetch('log.json', {cache: 'no-store'});
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const data = await resp.json();
+                if (Array.isArray(data.messages)) {
+                    renderMessages(data.messages);
+                } else if (Array.isArray(data)) {
+                    renderMessages(data);
+                }
+            } catch (err) {
+                // Fallback: mostrar mensaje local si fetch falla (p. ej. archivo local sin servidor)
+                renderMessages([
+                    {id:0, type:'error', message:'No se pudo cargar log.json. Abre el proyecto desde un servidor local para usar fetch.'}
+                ]);
+                console.warn('loadLog error:', err);
+            }
+        }
+
+        // Carga inicial y polling cada 3s para actualizaciones simples
+        loadLog();
+        const logPoll = setInterval(() => { if (!canceled) loadLog(); }, 3000);
+    </script>
+</body>
+</html>
