@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.O.S.B.I Wizard</title>
+</head>
+<body>
+    <h1>Choose a system</h1>
+    <h2>Backup first. Install safe and simple.</h2>
+    <div>
+        <label><input type="radio" name="source" value="list" checked> System list</label>
+        <select id="osSelect"></select>
+    </div>
+    <div>
+        <label><input type="radio" name="source" value="url"> Manual URL</label>
+        <input id="urlInput" type="text" placeholder="https://example.com/os.iso">
+    </div>
+    <div>
+        <label><input type="radio" name="source" value="file"> Archivo descargado</label>
+        <input id="fileInput" type="text" placeholder="D:\\descargas\\windows10.iso">
+    </div>
+    <button onclick="window.location.href = 'usb.html';">Back</button>
+    <button id="nextBtn">Next</button>
+    
+    <script>
+        const osSelect = document.getElementById('osSelect');
+        const nextBtn = document.getElementById('nextBtn');
+        const urlInput = document.getElementById('urlInput');
+        const fileInput = document.getElementById('fileInput');
+
+        function getSourceValue() {
+            const selected = document.querySelector('input[name="source"]:checked');
+            return selected ? selected.value : 'list';
+        }
+
+        function setOptions(systems) {
+            osSelect.innerHTML = '';
+            if (!systems || typeof systems !== 'object') {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = 'No systems available';
+                osSelect.appendChild(opt);
+                osSelect.disabled = true;
+                nextBtn.disabled = true;
+                return;
+            }
+            Object.keys(systems).forEach(k => {
+                const opt = document.createElement('option');
+                opt.value = k;
+                opt.textContent = systems[k].nombre || k;
+                osSelect.appendChild(opt);
+            });
+            osSelect.disabled = false;
+            nextBtn.disabled = false;
+        }
+
+        async function loadState() {
+            try {
+                const resp = await fetch('state.json', { cache: 'no-store' });
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const data = await resp.json();
+                setOptions(data.systems);
+            } catch (err) {
+                setOptions(null);
+                console.warn('loadState error:', err);
+            }
+        }
+
+        async function postSelection() {
+            const source = getSourceValue();
+            let selected = '';
+            if (source === 'url') {
+                selected = urlInput.value.trim();
+            } else if (source === 'file') {
+                selected = fileInput.value.trim();
+            } else {
+                selected = osSelect.value;
+            }
+            if (!selected) return;
+            try {
+                await fetch('/api/state', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ selected_system: selected })
+                });
+            } catch (err) {
+                console.warn('postSelection error:', err);
+            }
+            window.location.href = 'particiones.html';
+        }
+
+        nextBtn.addEventListener('click', postSelection);
+        loadState();
+    </script>
+</body>
+</html>

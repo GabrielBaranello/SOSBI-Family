@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.O.S.B.I Wizard</title>
+</head>
+<body>
+    <h1>Choose a partition</h1>
+    <div id="partitionList"></div>
+    <button onclick="window.location.href = 'os.html';">Back</button>
+    <button id="startBtn">Start</button>
+
+    <script>
+        const partitionList = document.getElementById('partitionList');
+        const startBtn = document.getElementById('startBtn');
+
+        function renderPartitions(parts) {
+            partitionList.innerHTML = '';
+            if (!Array.isArray(parts) || parts.length === 0) {
+                const p = document.createElement('p');
+                p.textContent = 'No partitions available';
+                partitionList.appendChild(p);
+                startBtn.disabled = true;
+                return;
+            }
+            parts.forEach(p => {
+                if (!p || !p.device) return;
+                if (String(p.device).toUpperCase() === 'C:') return;
+                const label = document.createElement('label');
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.value = p.device;
+                label.appendChild(cb);
+                label.appendChild(document.createTextNode(' ' + p.device));
+                partitionList.appendChild(label);
+                partitionList.appendChild(document.createElement('br'));
+            });
+            startBtn.disabled = false;
+        }
+
+        async function loadState() {
+            try {
+                const resp = await fetch('state.json', { cache: 'no-store' });
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const data = await resp.json();
+                renderPartitions(data.partitions || []);
+            } catch (err) {
+                renderPartitions([]);
+                console.warn('loadState error:', err);
+            }
+        }
+
+        async function postSelection() {
+            const selected = Array.from(partitionList.querySelectorAll('input[type="checkbox"]:checked'))
+                .map(cb => cb.value);
+            try {
+                await fetch('/api/state', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ selected_partitions: selected })
+                });
+            } catch (err) {
+                console.warn('postSelection error:', err);
+            }
+            window.location.href = 'instalacion.html';
+        }
+
+        startBtn.addEventListener('click', postSelection);
+        loadState();
+    </script>
+</body>
+</html>
