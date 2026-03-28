@@ -4,12 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>S.O.S.B.I Wizard</title>
+    <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-    <h1>Welcome to S.O.S.B.I Wizard</h1>
-    <h2>Backup first. Install safe and simple.</h2>
-    <button onclick="window.close()">Cancel</button>
-    <button onclick="window.location.href = 'usb.html';">Next</button>
-    
-</body>
+    <header>
+
+        <h1 class="not-flex">Welcome to S.O.S.B.I Wizard</h1>
+    </header>
+    <main class="body">
+        <h2>Backup first. Install safe and simple.</h2>
+        <div class="scrollable-box">
+
+<p style="color: #f00;font-weight: 800;">WARNING</p>
+
+This software performs advanced operations including:
+<ul>
+<li>Operating system installation</li>
+<li>Disk modification</li>
+<li>Data backup and restoration</li>
+</ul>
+These actions may result in:
+<ul>
+<li>Permanent data loss</li>
+<li>System corruption</li>
+<li>Unbootable devices</li>
+</ul>
+
+This software is provided "AS IS", without warranty of any kind.
+<div></div>
+By continuing, you acknowledge that:
+<ul>
+<li>You understand the risks</li>
+<li>You are solely responsible for any damage</li>
+<li>The author is not liable for any data loss or system failure</li>
+</ul>
+Type "I AGREE" to continue:
+<input id="ulliInput" type="text" placeholder="Type here..." oninput="document.getElementById('botonNext').disabled = this.value.trim() !== 'I AGREE';">
+</div>
+    </main>
+    <footer>
+
+        <div class="fila-check">
+        <!-- <input type="checkbox" id="acceptCheckbox" onchange="document.getElementById('botonNext').disabled = !this.checked"> -->
+        <!-- <label for="acceptCheckbox">I have read and I understant the effects of this software</label> -->
+        </div>
+        <div class="espaciador"></div>
+        <div class="fila-botones">
+        <button id="botonNext" onclick="window.location.href = 'usb.html';" class="not-flex" disabled>Next</button>
+        <button onclick="exit()">Cancel</button>
+        </div>
+    </footer>
+    <script>
+        function exit(){
+            console.debug("I will close this window")
+        }
+    </script>
+    </body>
 </html>

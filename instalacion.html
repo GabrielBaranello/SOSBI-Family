@@ -7,24 +7,82 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Installing.</h1>
-    <p class="scrollable-box" id="LogBox">
-        
-    </p>
-    <button id="cancelButton">Cancel</button>
+    <header>
+        <h1 class="not-flex">Installing</h1>
+    </header>
+    <main class="body">
+        <p class="scrollable-box" id="LogBox"></p>
+    </main>
+    <footer>
 
+        <button id="botonNext" onclick="window.location.href = 'usb.html';" class="not-flex" disabled>Next</button>
+        <button onclick="window.location.href = 'usb.html';">Back</button>
+        <button id="cancelButton">Cancel</button>
+    </footer>
+    <template id="canceling">
+        <header>
+            <h1 class="not-flex">Canceling...</h1>
+        </header>
+        <main class="body"></main>
+        <footer>
+            <button id="cancelButton" disabled>Close</button>
+    </template>
     <template id="canceled">
-        <h1>Installation canceled.</h1>
-        <p>You can now close this window.</p>
+        <header>
+            <h1 class="not-flex">Instalation canceled</h1>
+        </header>
+        <main class="body"></main>
+        <footer>
+            <button id="cancelButton" >Close</button>
+        </footer>  
     </template>
 
     <script>
         // Control cancel
         let canceled = false;
-        document.getElementById("cancelButton").addEventListener("click", function() {
+        document.getElementById("cancelButton").addEventListener("click", async function () {
             const canceledTemplate = document.getElementById("canceled");
-            canceled = true;
+            const cancelingTemplate = document.getElementById("canceling");
+
+            // Cambiar a pantalla "canceling"
+            document.body.innerHTML = cancelingTemplate.innerHTML;
+
+            // Avisar al backend
+            try {
+                await fetch('/api/cancel', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cancel: true })
+                });
+            } catch (err) {
+                console.warn('Error enviando cancel:', err);
+            }
+            canceled = true
+        
+            // Esperar hasta que state.json diga canceled = true
+            while (true) {
+                try {
+                    const resp = await fetch('state.json', { cache: 'no-store' });
+                
+                    if (resp.ok) {
+                        const data = await resp.json();
+                    
+                        if (data?.canceled === true) {
+                            break; // salir del loop
+                        }
+                    }
+                } catch (err) {
+                    console.warn('Error leyendo estado:', err);
+                }
+            
+                // Espera 1 segundo antes de volver a intentar
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+        
+            //  Cambiar a pantalla "canceled"
             document.body.innerHTML = canceledTemplate.innerHTML;
+        
+            console.debug("Cancelación completada");
         });
 
         // Installing animation (dots)

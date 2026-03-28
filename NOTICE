@@ -1,14 +1,14 @@
-Installer Deployment Tool
-Copyright (c) 2026 Gabriel Baranello
-
-This product includes software developed by Gabriel Baranello.
-
 This product bundles third-party software:
+
+- Ventoy (https://www.ventoy.net/)
+  Licensed under the GNU GPL v3.
+
+- ULLI (https://github.com/rltvty2/ulli)
+  Licensed under the GNU GPL v3.
 
 - 7-Zip (https://www.7-zip.org/)
   Licensed under the GNU LGPL v2.1.
-  License text: https://www.7-zip.org/license.txt
-
+  unRAR restriction applies.
 
 - rclone (https://rclone.org/)
   Licensed under the MIT License.

@@ -6,22 +6,38 @@
     <title>S.O.S.B.I Wizard</title>
 </head>
 <body>
-    <h1>Choose a partition</h1>
+    <h1>Choose a partition to backup</h1>
     <div id="partitionList"></div>
     <button onclick="window.location.href = 'os.html';">Back</button>
-    <button id="startBtn">Start</button>
+    <button id="discBtn">Start</button>
+    <template id="disclamerTemp">
+        Backup is NOT guaranteed.
+        <div></div>
+        Failures may occur due to:
+        <ul>
+            <li>Disk errors</li>
+            <li>Power loss</li>
+            <li>Incompatible systems</li>
+        </ul>
+        Verify your backup manually if the data is critical.
+        <div></div>
+        Type "CONTINUE WITHOUT GUARANTEE" to proceed:
+        <input id="ulliInput" type="text" placeholder="Type here..." oninput="document.getElementById('startBtn').disabled = this.value.trim() !== 'CONTINUE WITHOUT GUARANTEE';">
+        <button id="startBtn" disabled>Start</button>
+
+    </template>
 
     <script>
         const partitionList = document.getElementById('partitionList');
-        const startBtn = document.getElementById('startBtn');
-
+        const disclamerBtn = document.getElementById('discBtn')
+        const disclamerTemp = document.getElementById('disclamerTemp')
+        
         function renderPartitions(parts) {
             partitionList.innerHTML = '';
             if (!Array.isArray(parts) || parts.length === 0) {
                 const p = document.createElement('p');
                 p.textContent = 'No partitions available';
                 partitionList.appendChild(p);
-                startBtn.disabled = true;
                 return;
             }
             parts.forEach(p => {
@@ -36,7 +52,6 @@
                 partitionList.appendChild(label);
                 partitionList.appendChild(document.createElement('br'));
             });
-            startBtn.disabled = false;
         }
 
         async function loadState() {
@@ -66,7 +81,18 @@
             window.location.href = 'instalacion.html';
         }
 
-        startBtn.addEventListener('click', postSelection);
+        function disclamer (){
+            if (document.querySelectorAll('input[type="checkbox"]:checked').length === 0) {
+                postSelection();
+                return;
+            }
+            console.log("checbox activa detectada")
+            document.body.innerHTML = disclamerTemp.innerHTML;
+            const startBtn = document.getElementById('startBtn');
+            startBtn.addEventListener('click', postSelection);
+        }
+
+        disclamerBtn.addEventListener('click', disclamer);
         loadState();
     </script>
 </body>

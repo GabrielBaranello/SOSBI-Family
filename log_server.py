@@ -7,7 +7,9 @@ import os
 import psutil
 from log_utils import read_logs, append_entry
 from state_utils import read_state, write_state
+from windows.windows_py import Execute_ULLI
 
+_server = None
 
 class APIHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
@@ -31,6 +33,7 @@ class APIHandler(SimpleHTTPRequestHandler):
     def do_POST(self):
         parsed = urlparse(self.path)
         if parsed.path == '/api/scan':
+            print("api/scan post")
             # Re-scan USB devices and partitions on demand
             discos = psutil.disk_partitions()
             usbs = [d.device.rstrip('\\') for d in discos if 'removable' in d.opts]
@@ -43,6 +46,7 @@ class APIHandler(SimpleHTTPRequestHandler):
                 }
                 for d in discos if 'fixed' in d.opts
             ]
+            usbs.append("Usb Less Instaler (only Linux)")
             state = write_state({'usb_devices': usbs, 'partitions': partitions})
             self.send_response(200)
             self.send_header('Content-Type', 'application/json; charset=utf-8')
@@ -50,6 +54,7 @@ class APIHandler(SimpleHTTPRequestHandler):
             self.wfile.write(json.dumps({'status':'ok','state': state}, ensure_ascii=False).encode('utf-8'))
             return
         if parsed.path == '/api/log':
+            print("api/log post")
             length = int(self.headers.get('Content-Length', '0'))
             body = self.rfile.read(length) if length else b''
             try:
@@ -75,6 +80,7 @@ class APIHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(json.dumps({'error': str(e)}).encode('utf-8'))
                 return
         if parsed.path == '/api/state':
+            print("api/state post")
             length = int(self.headers.get('Content-Length', '0'))
             body = self.rfile.read(length) if length else b''
             try:
@@ -92,14 +98,33 @@ class APIHandler(SimpleHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(json.dumps({'error': str(e)}).encode('utf-8'))
                 return
-        return super().do_POST() # type: ignore
+        if parsed.path == '/api/ULLI':
+            try:
+                Execute_ULLI()
+            finally:
+                try:
+                    if _server:
+                        _server.shutdown()
+                finally:
+                    os._exit(0)
+        if parsed.path == 'api/cancel':
+            print("api/cancel post")
+            cancel() #type: ignore
+            return
+
+        print(parsed.path)
+        return
+                    
+        #return super().do_POST() # type: ignore
 
 
 def start_server(port=8000, host='127.0.0.1'):
+    global _server
     cwd = os.path.dirname(__file__)
     os.chdir(cwd)
     server = ThreadingHTTPServer((host, port), APIHandler)
 
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
+    _server = server
     return server

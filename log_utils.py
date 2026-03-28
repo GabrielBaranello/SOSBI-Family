@@ -31,6 +31,8 @@ def write_log(message, typ='info'):
         messages = []
         data = { 'messages': messages }
 
+    if typ == "error":
+        raise Exception(message)
     entry = {
         'id': int(datetime.utcnow().timestamp()),
         'type': typ,

@@ -1,11 +1,13 @@
 .scrollable-box {
+  overflow-y: auto; /* Scroll vertical */
+  border: 1px solid #ccc;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+}
+#LogBox{
   height: 150px; /* Tamaño específico */
-    width: 300px;
-    overflow-y: auto; /* Scroll vertical */
-    border: 1px solid #ccc;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
+  width: 300px;
 }
 
 /* Log message styles */
@@ -41,4 +43,64 @@
   font-size: 11px;
   opacity: 0.7;
   margin-top: 4px;
+}
+
+
+body {
+  margin: 5px;
+  height: 100vh;         /* Altura total de la ventana */
+  display: flex;
+  flex-direction: column; /* Apila: arriba, centro, abajo */
+  overflow: hidden;      /* Evita el scroll de toda la página */
+}
+
+.body {
+  flex-grow: 1;          /* Ocupa TODO el espacio sobrante */
+  /*background: radial-gradient(circle, white 15%, #e6e6f8 70%);
+  overflow-y: auto;      /* Si hay mucho contenido, solo scrolea este div *//*
+  border: #0b4f8a;
+  border-width: 5px;
+  border-radius: 10px;
+  box-shadow: 0px 5px 5px #49bde480;
+  padding: 10px 0 0 10px; */
+  /*margin: 5px;/**/
+}
+
+header, footer {
+  flex-shrink: 0;
+  padding: 2px;
+  display: flex;
+  align-items: flex-end;    
+}
+
+header {
+  justify-content: center;
+}
+button {
+  margin: 0%;
+}
+.mar-right {
+  margin-right: 0px;
+}
+
+footer {
+  display: flex;
+  flex-direction: column; 
+  padding: 20px;
+  background-color: #ebebfe;
+}
+
+.fila-check {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.espaciador {
+  flex-grow: 1; 
+}
+
+.fila-botones {
+  display: flex; 
+  gap: 15px;
 }

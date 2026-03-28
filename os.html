@@ -9,29 +9,58 @@
     <h1>Choose a system</h1>
     <h2>Backup first. Install safe and simple.</h2>
     <div>
-        <label><input type="radio" name="source" value="list" checked> System list</label>
+        <label><input type="radio" name="source" value="list" checked onchange="if(this.checked){noDisclamer()}"> System list</label>
         <select id="osSelect"></select>
     </div>
     <div>
-        <label><input type="radio" name="source" value="url"> Manual URL</label>
+        <label><input type="radio" name="source" value="url" onchange="if(this.checked){disclamer()}"> Manual URL</label>
         <input id="urlInput" type="text" placeholder="https://example.com/os.iso">
+        <div></div>
+        <p id="disclamerDesc" style="color: #d00;"></p>
     </div>
     <div>
-        <label><input type="radio" name="source" value="file"> Archivo descargado</label>
+        <label><input type="radio" name="source" value="file"  onchange="if(this.checked){noDisclamer()}"> Archivo descargado</label>
         <input id="fileInput" type="text" placeholder="D:\\descargas\\windows10.iso">
     </div>
     <button onclick="window.location.href = 'usb.html';">Back</button>
     <button id="nextBtn">Next</button>
-    
+    <template id="ULLI">
+        <h1>ULLI - USB Less Linux Installer</h1>
+        <p>You are about to install an OS WITHOUT external media.</p>
+            <p>This may: </p>
+            <ul>
+                <li>Modify your internal disk directly</li>
+                <li>Make your system unbootable if something fails </li>
+                <li>Cause permanent data loss</li>
+            </ul>
+
+            This feature is intended for advanced users only.
+            <div></div>
+             
+            <div></div>
+            Neither the author of S.O.S.B.I Wizard nor the author of this ULLI shall be held liable for any direct or indirect damages, including but not limited to data loss, system corruption, hardware failure, or any other issues arising from the use or misuse of this software.
+            <p>Type "I UNDERSTAND" to continue:</p>
+        <input id="ulliInput" type="text" placeholder="Type here..." oninput="document.getElementById('ulliNextBtn').disabled = this.value.trim() !== 'I UNDERSTAND';">
+    <button id="ulliNextBtn" disabled>Continue</button>
+    <button onclick="window.location.href = 'usb.html';">Back</button>
+    </template>
     <script>
         const osSelect = document.getElementById('osSelect');
         const nextBtn = document.getElementById('nextBtn');
         const urlInput = document.getElementById('urlInput');
         const fileInput = document.getElementById('fileInput');
-
+        const templateULLI = document.getElementById('ULLI');
+        const disclamerDescarga = document.getElementById('disclamerDesc')
+        
         function getSourceValue() {
             const selected = document.querySelector('input[name="source"]:checked');
             return selected ? selected.value : 'list';
+        }
+        function disclamer (){
+            disclamerDescarga.innerHTML = "Downloading from external sources may be unsafe. Proceed at your own risk."
+        }
+        function noDisclamer (){
+            disclamerDescarga.innerHTML = ""
         }
 
         function setOptions(systems) {
@@ -61,6 +90,7 @@
                 if (!resp.ok) throw new Error('HTTP ' + resp.status);
                 const data = await resp.json();
                 setOptions(data.systems);
+                return data;
             } catch (err) {
                 setOptions(null);
                 console.warn('loadState error:', err);
@@ -90,8 +120,31 @@
             window.location.href = 'particiones.html';
         }
 
+        async function postULLI() {
+            try {
+                await fetch('/api/ULLI', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ acceptedULLI: true })
+                });
+            } catch (err) {
+                console.warn('postULLI error:', err);
+            }
+        }
         nextBtn.addEventListener('click', postSelection);
-        loadState();
+        loadState().then(data => {
+            console.log("Initial state loaded:", data);
+            
+            if (data.selected_usb === "Usb Less Instaler (only Linux)") {
+                console.log("Selected ULLI, showing warning...");
+                document.body.innerHTML = templateULLI.innerHTML;
+                const ulliNextBtn = document.getElementById('ulliNextBtn');
+                ulliNextBtn.addEventListener('click', postULLI);
+            }
+            else {
+                console.log("Not ULLI, showing normal screen...");
+            }
+        });
     </script>
 </body>
 </html>

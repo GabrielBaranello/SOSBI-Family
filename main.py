@@ -1,24 +1,28 @@
 # Copyright (c) 2026 Gabriel Baranello
 # Licensed under the Apache License, Version 2.0
-import os
-import subprocess
-import shutil
-import time
-import webbrowser
-import threading
+import os, subprocess, shutil, time, threading, platform
 from log_utils import write_log
 from state_utils import write_state, read_state
 from log_server import start_server
-from windows.windows_py import detectar_usbs, download, _7Z_RUTA, _RCLONE_RUTA, _VENTOY_RUTA, _DONE_RUTA, _LOG_RUTA, instalar_ventoy_gpt, detectar_particiones
-# --- CONFIGURACIÓN DE SISTEMAS (Pon tus links directos aquí) ---
+sistem = platform.system()
+if sistem == "Windows":
+    from windows.windows_py import detectar_usbs, download, _7Z_RUTA, _RCLONE_RUTA, _VENTOY_RUTA, _DONE_RUTA, _LOG_RUTA, instalar_ventoy_gpt, detectar_particiones
+elif sistem == "Linux":
+    from Linux.Linux_py import detectar_usbs, download, _7Z_RUTA, _RCLONE_RUTA, _VENTOY_RUTA, _DONE_RUTA, _LOG_RUTA, instalar_ventoy_gpt, detectar_particiones
+elif sistem == "Darwin":
+    from MacOS.MacOS_py import detectar_usbs, download, _7Z_RUTA, _RCLONE_RUTA, _VENTOY_RUTA, _DONE_RUTA, _LOG_RUTA, instalar_ventoy_gpt, detectar_particiones
+else:
+    print(f"El sistema {sistem} no coincide con ningun sistema soportado")
+    exit(1)
 copy = False
 usb = True
+tamaño_ventoy = 33554432 #tamaño en bytes
 
 SISTEMAS = {
     "1": {"nombre": "Tomex OS", "url": "https://tu-servidor.com"},
     "2": {"nombre": "Chot OS", "url": "https://tu-servidor.com"},
     "3": {"nombre": "Mini OS", "url": "https://tu-servidor.com"},
-    "4": {"nombre": "Ubuntu", "url": "https://releases.ubuntu.com"},
+    "4": {"nombre": "Ubuntu", "url": "https://releases.ubuntu.com/14.04.6/ubuntu-14.04.6-desktop-amd64.iso"},
     "5": {"nombre": "Windows 10", "url": "https://tu-servidor.com"},
     "6": {"nombre": "Windows 11", "url": "https://tu-servidor.com"},
 }
@@ -59,24 +63,6 @@ def backup_y_subida(origen, nombre_backup, letra_usb):
     "print(\"Subiendo a la nube mediante Rclone...\")"
     subprocess.run(f'{_RCLONE_RUTA} move "{temp_usb}" "remote:backups/{nombre_backup}" --progress', shell=True)
 
-def _read_cli_done(path):
-    try:
-        with open(path, "r", encoding="utf-8", errors="ignore") as f:
-            return f.read().strip()
-    except Exception:
-        return None
-
-def _log_cli_tail(path, max_lines=5):
-    try:
-        with open(path, "r", encoding="utf-8", errors="ignore") as f:
-            lines = f.read().splitlines()
-            tail = lines[-max_lines:] if len(lines) >= max_lines else lines
-            if tail:
-                write_log("Ventoy log: " + " | ".join(tail), "info")
-    except Exception:
-        pass
-
-
 def copiar_iso_a_usb(origen, usb_drive):
     usb_root = usb_drive.rstrip("\\") + "\\"
     if os.path.exists(origen):
@@ -93,9 +79,13 @@ def main():
     global copy, usb
     with open("log.json", "w") as archivo:
         pass # No se escribe nada, el archivo queda vacío
+    with open("state.json", "w") as archivo:
+        pass # No se escribe nada, el archivo queda vacío
+    
     write_state({'start_install': False})
     # 1. Detectar USB
-    discos, usbs = detectar_usbs()
+    usbs = detectar_usbs()
+    print(usbs)
     # Guardar la detección en el state.json para que la UI la consuma
     """partitions = [
         {
@@ -109,22 +99,22 @@ def main():
     partitions = detectar_particiones()
     write_state({'usb_devices': usbs, 'systems': SISTEMAS, 'partitions': partitions})
     # "print(\"Error: No se detectó ningún USB.\")"
-    if not usbs:
+    """if not usbs:
         write_log("No se detectó ningún USB.", "error")
         return
     write_log("Unidades extraibles detectadas:", "info")
-    """if len(usbs) == 1:
+    if len(usbs) == 1:
         target_usb = usbs[0]
         write_log(f"Seleccionando automáticamente: {target_usb}", "info")
         write_state({'selected_usb': target_usb})
-    """
+    
     
     for i in range(len(usbs)):
         "print(f\"{i}. unidad USB {usbs[i]}\")"
     "target_usb = usbs[int(input(\"Elija un USB para generar el medio de instalacion: \"))]"
     # 3. Respaldos (USB + Usuarios + Particiones)
     # Interacción con el usuario ahora via UI: se espera que la webview POSTee selections
-    """if input(f\"\n¿Desea respaldar el contenido del USB {target_usb}? (s/n): \").lower() == 's':\n
+    if input(f\"\n¿Desea respaldar el contenido del USB {target_usb}? (s/n): \").lower() == 's':\n
     backup_y_subida(target_usb, \"Backup_USB\", target_usb)
     """
     # Esperar selección de UI en state.json
@@ -138,7 +128,7 @@ def main():
     if selected:
         write_log(f"Usuario seleccionó USB: {selected}", 'info')
         # Aquí se puede continuar usando `selected` como target_usb
-        if selected == "Usb Less Instaler":
+        if selected == "Usb Less Instaler (only Linux)":
             usb = False
         else:
             usb = True
@@ -188,7 +178,19 @@ def main():
     if not url_descarga:
         write_log("URL no válida.", "error")
         return
-
+    """
+    _, __, tamaño_usb = shutil.disk_usage(usb)
+    if usb == True:
+        if copy == True:
+            if tamaño_usb - tamaño_ventoy - os.path.getsize(url_descarga) > 0:
+                pass
+        else:
+            respuesta = requests.head(url_descarga, allow_redirects=True)
+            respuesta.raise_for_status() # Verifica errores
+            if tamaño_usb - tamaño_ventoy - int(respuesta.headers.get('Content-Length', None)) > 0:
+                pass # """
+    if usb == False:
+        pass
     # Esperar señal desde la pantalla de instalación
     start_install = None
     for _ in range(600):
@@ -212,6 +214,8 @@ def main():
         if not nombre or "." not in nombre:
             nombre = "os_setup.iso"
         archivo_dest = f"{target_usb}\\{nombre}"
+        if "tu-servidor.com" in url_descarga:
+            raise Exception("URL placeholder no válida")
         download(url_descarga, archivo_dest)
 
     # 6. Finalizar
@@ -229,15 +233,8 @@ if __name__ == "__main__":
         import webview
         webview.create_window("S.O.S.B.I Wizard", "http://127.0.0.1:8000/index.html")
         webview.start()
-    except Exception:
-        try:
-            webbrowser.open("http://127.0.0.1:8000/index.html")
-        except Exception:
-            pass
-
-# Ejemplo de uso integrado:
-# letra_usb = "F:\\"
-# url_elegida = "https://tu-enlace-directo.com"
-# descargar_y_descomprimir(url_elegida, letra_usb)
-
-#generar_lista_programas()
+    except Exception as e:
+        if str(e) == "No module named 'webview'":
+            raise Exception('Instale la libreria Webview con " pip install pywebview "')
+        else:
+            print("Errror: ", e)
